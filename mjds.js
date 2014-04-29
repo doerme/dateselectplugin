@@ -22,7 +22,6 @@ $.fn.jdateselect = function(options){
 	var monthsNum=[31,28,31,30,31,30,31,31,30,31,30,31];
 	var weekFont=["日","一","二","三","四","五","六"];
 	
-	
 	var nextmonth=new Date();
 	nextmonth.setFullYear(o.today.getFullYear());
 	nextmonth.setMonth(parseInt(o.today.getMonth())+1); /*上一个月*/
@@ -46,23 +45,27 @@ $.fn.jdateselect = function(options){
 	$("<li><span></span></li>").appendTo(".month-body").addClass("month-cell");
 	}
 	var f = firstDay;
+	/*填充日历数据*/
 	var array_mark="";
 	var array_content=[];
 	/*日历主体*/
 	for(var j=1;j<=monthsNum[m];f++,j++){
-	  $("li.month-cell > span").eq(f).text(j).attr({"y":FullYear,"m":m,"d":j}).parent().addClass("pink");
 	  array_mark=FullYear+pad(m)+pad(j);
+	  $("li.month-cell > span").eq(f).text(j).parent().addClass("pink").attr({"ymd":array_mark});
 	  if(isset(o.jsondata.daydata[array_mark])){
-	   drawdata(o.jsondata.daydata[array_mark],f);
+	   $("li.month-cell > span").eq(f).parent(),drawdata(o.jsondata.daydata[array_mark],f);
+	   markdata(o.jsondata.daydata[array_mark],f);
 	  }
 	}
 	
 	/*填充后空白*/
 	for(var n=1;f<42;f++,n++){
-	$("li.month-cell > span").eq(f).text(n).attr({"y":nextmonth.getFullYear(),"m":nextmonth.getMonth(),"d":n}).parent().addClass("future");	
-	  array_mark=nextmonth.getFullYear()+pad(nextmonth.getMonth())+pad(n);
+	array_mark=nextmonth.getFullYear()+pad(nextmonth.getMonth())+pad(n);
+	$("li.month-cell > span").eq(f).text(n).parent().addClass("future").attr({"ymd":array_mark});	
+	  
 	  if(isset(o.jsondata.daydata[array_mark])){
-	   drawdata(o.jsondata.daydata[array_mark],f);
+	   $("li.month-cell > span").eq(f).parent(),drawdata(o.jsondata.daydata[array_mark],f)	  
+	   markdata(o.jsondata.daydata[array_mark],f);
 	  }
 	}
 	
@@ -70,11 +73,21 @@ $.fn.jdateselect = function(options){
 	var tmp_max_day=0;
 	if(m-1<0){tmp_max_day=monthsNum[11]}else{tmp_max_day=monthsNum[m-1]}
 	for(var n=firstDay-1;n>=0;n--,tmp_max_day--){
-		$("li.month-cell > span").eq(n).text(tmp_max_day).attr({"y":prevmonth.getFullYear(),"m":prevmonth.getMonth(),"d":tmp_max_day}).parent().addClass("past");
-		 array_mark=prevmonth.getFullYear()+pad(prevmonth.getMonth())+pad(tmp_max_day);
+	     array_mark=prevmonth.getFullYear()+pad(prevmonth.getMonth())+pad(tmp_max_day);
+		$("li.month-cell > span").eq(n).text(tmp_max_day).parent().addClass("past").attr({"ymd":array_mark});
+		
 		  if(isset(o.jsondata.daydata[array_mark])){
-		   drawdata(o.jsondata.daydata[array_mark],n);
-		  }
+		   $("li.month-cell > span").eq(n).parent(),drawdata(o.jsondata.daydata[array_mark],n);
+		   markdata(o.jsondata.daydata[array_mark],n);
+		}
+	}
+
+	/*选中已选择的日期*/
+	var had_select=$.trim($("#selected-day").val())==''?[]:$.parseJSON($("#selected-day").val());
+	if(had_select.length>0){
+	$.each($(".month-cell"),function(){
+		if($.inArray($(this).attr("ymd"),had_select)>-1){$(this).addClass("selected");}
+		});
 	}
 	
 	/*标出当天*/
@@ -107,8 +120,16 @@ $.fn.jdateselect = function(options){
 		  $("li.month-cell > span").eq(f).append("<p>"+items+""+array_content[items]+"</p>")
 	  }
 	}
+
+  /* 为日期标签标上属性 */
+	function markdata(array_content,f){
+	 var tmp_subscript=0;
+	 for(items in array_content){
+		  $("li.month-cell > span").eq(f).parent().attr("v"+tmp_subscript++,array_content[items]);
+	  }
+	}
 	
-  /*日历点击 选择事件*/
+  /* 日历点击 选择事件 >>>>>按需要改动<<<<<  */
   	function monthcellclick(cell){
 	    if(cell.hasClass("week")){return;}
 		var selected_point_1=cell.index();
@@ -118,10 +139,47 @@ $.fn.jdateselect = function(options){
 		if($(".month-cell.selected").size()>1){
 		/*大于一说明已经选择了开始于结束 重新选择逻辑*/
 		$(".month-cell.selected").removeClass("selected");
-		}
+		}else{
 		for(var n=gomin(selected_point_1,selected_point_2);n<=gomax(selected_point_1,selected_point_2);n++){
 			$(".month-cell").eq(n).addClass("selected");
-		}	
+		}
+		}
+		/*保存已经选择的日期*/
+		savestate();
+	}
+	
+	/*记录选中的日期
+	param 删除指定的排期
+	*/
+	function savestate(){
+		var tmp_json_value=$.trim($("#selected-day").val())==''?[]:$.parseJSON($("#selected-day").val());
+		var total_period=[];
+		var tmp_array=[];
+		$.each($(".month-cell.selected"),function(){
+		total_period.push($(this).attr("ymd"));
+		});
+		tmp_json_value=tmp_json_value.concat(total_period)
+		tmp_json_value.sort();
+        tmp_array=uniqueArray(tmp_json_value);
+		$("#selected-day").val(JSON.stringify(tmp_array));
+	}
+	
+	/*去除数组重复元素*/
+	function uniqueArray(a){
+    temp = new Array();
+    for(var i = 0; i < a.length; i ++){
+        if(!contains(temp, a[i])){
+            temp.length+=1;
+            temp[temp.length-1] = a[i];
+        }
+    }
+    return temp;
+    }
+	
+	/*判断数组a是否含有元素e*/
+	function contains(a, e){
+		for(j=0;j<a.length;j++)if(a[j]==e)return true;
+		return false;
 	}
   
   /*isset*/
@@ -150,8 +208,7 @@ $.fn.jdateselect = function(options){
   /* 插件的defaults     */
   $.fn.jdateselect.defaults = {    
        today:new Date(),/*绘制月历月份所属的当前日期*/
-	   jsondata:{}, /*日历之中填写的数据*/
-	   show_model:"month"
+	   jsondata:{} /*日历之中填写的数据*/
   };  
 
 })(jQuery); 

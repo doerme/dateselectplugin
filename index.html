@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Jeremy plug</title>
+<style>
+*{margin:0; padding:0; border:0;}
+#mydateselect ul.month-body{ width:574px; border:1px solid #000; overflow:hidden;}
+#mydateselect ul.month-body .month-cell{list-style:none; width:80px; display:block; height:80px; border:1px solid #000;}
+#mydateselect ul.month-body .month-cell{float:left;}
+#mydateselect ul.month-body .month-cell.week{ color:green;}
+#mydateselect ul.month-body .month-cell.selected{ background:#6C0;}
+#mydateselect ul.month-body li.red{ color:#F00;}
+#mydateselect ul.month-body li.past,#mydateselect ul.month-body li.future{ color:#999;}
+#mydateselect ul.month-body .month-cell p{ font-size:12px;}
+</style>
+<script type="text/javascript" src="jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="mjds.js"></script>
+</head>
+
+<body>
+<div id="mydateselect"></div>
+<a id="prev_month">上一月</a>
+<a id="next_month">下一月</a>
+<script>
+/*
+month_pointer current当前月 prev上一个月 next下一个月
+month_offset int 月份偏移量 当month_pointer是prev或next时候才有效
+*/
+
+/*注意月份是从0-11*/
+var myjsondata={ "retcode":"0","mark":"1",
+                 "daydata":{
+					 20140227:{"标题1":"内容","标题2":"内容","标题3":"内容"},
+					 20140228:{"标题1":"内容","标题2":"内容","标题3":"内容"},
+					 20140229:{"标题1":"内容","标题2":"内容","标题3":"内容"},
+			         20140230:{"标题1":"内容","标题2":"内容","标题3":"内容"},
+				     20140231:{"标题1":"内容","标题2":"内容","标题3":"内容"},
+					 20140301:{"标题1":"内容","标题2":"内容","标题3":"内容"},
+					 20140302:{"标题1":"内容","标题2":"内容","标题3":"内容"}
+				 }
+}
+$.fn.jdateselect.defaults.jsondata=myjsondata;
+
+
+$("#mydateselect").jdateselect();
+
+$("#next_month").bind("click",function(){
+ var nextmonth=new Date();
+ nextmonth.setFullYear($("#mydateselect").attr("y"));
+ nextmonth.setMonth(parseInt($("#mydateselect").attr("m"))+1);
+ $.fn.jdateselect.defaults.today=nextmonth;
+ $("#mydateselect").jdateselect();
+});
+
+$("#prev_month").bind("click",function(){
+ var prevmonth=new Date();
+ prevmonth.setFullYear($("#mydateselect").attr("y"));
+ prevmonth.setMonth(parseInt($("#mydateselect").attr("m"))-1);
+ $.fn.jdateselect.defaults.today=prevmonth;
+ $("#mydateselect").jdateselect();
+});
+
+
+</script>
+
+</body>
+</html>
